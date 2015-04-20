@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Stack;
 import java.util.Vector;
 
+import android.content.ContentUris;
+import android.provider.DocumentsContract;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.AlertDialog;
@@ -428,11 +430,12 @@ public class Uploader extends FileActivity
             for (Parcelable mStream : mStreamsToUpload) {
                 
                 Uri uri = (Uri) mStream;
+                Log_OC.d(TAG, "uri scheme is " + uri.getScheme());
                 if (uri !=null) {
                     if (uri.getScheme().equals("content")) {
                         
                        String mimeType = getContentResolver().getType(uri);
-                       
+                       Log_OC.d(TAG, "mime type is " + mimeType);
                        if (mimeType.contains("image")) {
                            String[] CONTENT_PROJECTION = { Images.Media.DATA,
                                    Images.Media.DISPLAY_NAME, Images.Media.MIME_TYPE,
@@ -476,8 +479,32 @@ public class Uploader extends FileActivity
                         
                        }
                        else {
-                           String filePath = Uri.decode(uri.toString()).replace(uri.getScheme() +
-                                   "://", "");
+                           String filePath = "";
+                           String id = DocumentsContract.getDocumentId(uri);
+                           Uri contentUri = ContentUris.withAppendedId( Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
+                           Log_OC.d(TAG, "contentUri.getPath() is " + contentUri.getPath());
+                           Log_OC.d(TAG, "contentUri.toString() is " + contentUri.toString());
+                           Log_OC.d(TAG, "Uri.decode(contentUri.toString()) is " + Uri.decode(contentUri.toString()));
+
+                           Cursor cursor = null;
+                           String column = "_data";
+                           String[] projection = { column };
+                           cursor = getContentResolver().query(contentUri, projection, null, null, null);
+                           if (cursor != null && cursor.moveToFirst()) {
+                               final int index = cursor.getColumnIndexOrThrow(column);
+                               Log_OC.d(TAG,"cursor.getString() is " + cursor.getString(index));
+                               filePath = cursor.getString(index);
+                           }
+                           /*Cursor c = getContentResolver().query(uri, null, null, null, null);
+                           c.moveToFirst();
+                           for(int col=0; col < c.getColumnCount(); col++) {
+                               String colName = c.getColumnName(col);
+                               Log_OC.d(TAG,"ColumnName for col " + Integer.toString(col) + " is "  + colName);
+                               Log_OC.d(TAG,"getString for col " + Integer.toString(col) + " is "  + c.getString(col));
+                           }*/
+                           //String filePath = Uri.decode(uri.toString()).replace(uri.getScheme() +
+                           //        "://", "");
                            // cut everything whats before mnt. It occurred to me that sometimes
                            // apps send their name into the URI
                            if (filePath.contains("mnt")) {

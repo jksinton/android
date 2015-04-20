@@ -742,6 +742,8 @@ public class FileUploader extends Service
     private OCFile obtainNewOCFileToUpload(String remotePath, String localPath, String mimeType,
                                            FileDataStorageManager storageManager) {
 
+        Log_OC.d(TAG, "localPath is " + localPath);
+        Log_OC.d(TAG, "remotePath is " + remotePath);
         // MIME type
         if (mimeType == null || mimeType.length() <= 0) {
             try {
